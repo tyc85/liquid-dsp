@@ -576,14 +576,14 @@ void ofdmframesync_execute_S0b(ofdmframesync _q)
     printf("  tau_hat   :   %12.8f\n", tau_hat);
 
     // new timing offset estimate
-    tau_hat  = cargf(_q->s_hat_0 + _q->s_hat_1) * (float)(_q->M2) / (2*M_PI);
+    tau_hat  = (cargf(_q->s_hat_0) + cargf(_q->s_hat_1))/2 * (float)(_q->M2) / (2*M_PI);
     printf("  tau_hat * :   %12.8f\n", tau_hat);
 
     printf("**********\n");
 #endif
 
     // re-adjust timer accordingly
-    float tau_prime = cargf(_q->s_hat_0 + _q->s_hat_1) * (float)(_q->M2) / (2*M_PI);
+    float tau_prime = (cargf(_q->s_hat_0) + cargf(_q->s_hat_1))/2 * (float)(_q->M2) / (2*M_PI);
     _q->timer -= (int)roundf(tau_prime);
 
 #if 0
@@ -609,10 +609,12 @@ void ofdmframesync_execute_S0b(ofdmframesync _q)
     // compute carrier frequency offset estimate using ML method
     float complex t0 = 0.0f;
     for (i=0; i<_q->M2; i++) {
-        t0 += conjf(rc[i])       *       _q->s0[i] * 
-                    rc[i+_q->M2] * conjf(_q->s0[i+_q->M2]);
+        t0 += cargf(
+            conjf(rc[i])       *       _q->s0[i] * 
+            rc[i+_q->M2] * conjf(_q->s0[i+_q->M2])
+        )/(float)(_q->M2);
     }
-    float nu_hat = cargf(t0) / (float)(_q->M2);
+    float nu_hat = t0 / (float)(_q->M2);
 #endif
 
 #if DEBUG_OFDMFRAMESYNC_PRINT
